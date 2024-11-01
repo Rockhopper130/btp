@@ -10,7 +10,7 @@ from tqdm import tqdm
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
-pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token="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")
+pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token="HUGGING_FACE_TOKEN")
 pipeline.to(torch.device("mps"))
 
 whisper_model = whisper.load_model("base")
