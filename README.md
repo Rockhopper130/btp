@@ -1,9 +1,10 @@
 # BTP-App
 
 ## Completed
-- Audio to transcript
-- Label transcript according to speaker (need to check accuracy)
+- audio to transcript
+- transcript to summary
+- summary to original text (primitive)
 
 ## TODO
-- Summary
-- Retrieval
+- Add own research
+- Add metrics
