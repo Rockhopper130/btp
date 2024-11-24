@@ -2,7 +2,6 @@ import React, { useState, useRef } from "react";
 import axios from "axios";
 import AudioTranscriber from "./components/AudioTranscriber";
 import AudioWaveform from "./components/AudioWaveform"; // Import the AudioWaveform component
-import "./App.css"; // Include the CSS file
 
 function App() {
   const [audioFile, setAudioFile] = useState(null);
@@ -49,7 +48,19 @@ function App() {
   };
 
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ textAlign: "center" }}>
+      <header
+        style={{
+          background: "linear-gradient(90deg, #4CAF50, #81C784)", 
+          padding: "20px",
+          marginBottom: "20px",
+          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)", 
+          color: "white", 
+          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", 
+        }}
+      >
+        <h2 style={{ margin: 0 }}>Audio Abstractor</h2>
+      </header>
       <AudioWaveform
         audioFile={audioFile}
         onSentenceClick={(handler) => {

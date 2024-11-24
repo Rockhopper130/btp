@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import "./AudioTranscriber.css";
 
 const AudioTranscriber = ({
   audioFile,
@@ -8,44 +9,69 @@ const AudioTranscriber = ({
   handleTranscribe,
   handleSentenceClick,
 }) => {
+  const [expandedSegments, setExpandedSegments] = useState({});
+
+  const toggleExpandSegment = (index) => {
+    setExpandedSegments((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  };
+
   return (
-    <div style={{ textAlign: "center", padding: "20px" }}>
-      <h2>Audio Transcriber</h2>
-      <input type="file" accept="audio/*" onChange={handleFileChange} />
-      <button onClick={handleTranscribe} disabled={!audioFile || loading}>
-        {loading ? "Transcribing..." : "Transcribe Audio"}
-      </button>
-      <div style={{ marginTop: "20px" }}>
-        <h3>Transcription:</h3>
+    <div className="transcriber-container">
+      <div className="transcriber-controls">
+        {/* <h2 className="transcriber-header">Add File</h2> */}
+        <input
+          type="file"
+          accept="audio/*"
+          onChange={handleFileChange}
+          className="file-input"
+        />
+        <button
+          onClick={handleTranscribe}
+          disabled={!audioFile || loading}
+          className={`transcribe-button ${loading ? "disabled" : ""}`}
+        >
+          {loading ? "Transcribing..." : "Transcribe Audio"}
+        </button>
+      </div>
+      <div className="transcription-output">
+        <h3 className="transcription-header">Summary:</h3>
         {Array.isArray(transcript) ? (
           transcript.map((segment, index) => (
-            <div
-              key={index}
-              style={{
-                marginBottom: "1.5rem",
-                textAlign: "left",
-                padding: "10px",
-                border: "1px solid #ddd",
-              }}
-            >
-              <h4>Summary: {segment.summary_sentence}</h4>
-              {segment.sentence_data.map((sentence) => (
-                <div
-                  key={sentence.id}
-                  style={{ marginBottom: "0.5rem", cursor: "pointer"}}
-                  onClick={() =>
-                    handleSentenceClick(sentence.start, sentence.end)
-                  }
-                >
-                  <strong>{sentence.speaker}:</strong>{" "}
-                  {"[" + sentence.start + "s - " + sentence.end + "s] "}
-                  {sentence.text}
+            <div key={index} className="transcription-segment">
+              <div
+                className="segment-summary"
+                onClick={() => toggleExpandSegment(index)}
+              >
+                <p>
+                  {segment.summary_sentence}
+                </p>
+              </div>
+              {expandedSegments[index] && (
+                <div className="sentence-list">
+                  {segment.sentence_data.map((sentence) => (
+                    <div
+                      key={sentence.id}
+                      className="sentence"
+                      onClick={() =>
+                        handleSentenceClick(sentence.start, sentence.end)
+                      }
+                    >
+                      <strong className="speaker">{sentence.speaker}:</strong>{" "}
+                      <span className="time-range">
+                        {"[" + sentence.start + "s - " + sentence.end + "s] "}
+                      </span>
+                      {sentence.text}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           ))
         ) : (
-          <p>
+          <p className="transcription-placeholder">
             {typeof transcript === "string"
               ? transcript
               : "Upload an audio file to get started!"}

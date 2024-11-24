@@ -10,73 +10,65 @@ const AudioWaveform = ({ audioFile, onSentenceClick }) => {
   const waveformRef = useRef(null);
   const wavesurferRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackRate, setPlaybackRate] = useState(1); // Default playback rate
-  const [volume, setVolume] = useState(1); // Default volume (100%)
-  const [loop, setLoop] = useState(true); // Looping state
-  const [activeRegion, setActiveRegion] = useState(null); // Active region state
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [volume, setVolume] = useState(1);
+  const [loop, setLoop] = useState(false); // Default loop state should be off
+  const [activeRegion, setActiveRegion] = useState(null);
 
   useEffect(() => {
     if (audioFile) {
-      const regions = RegionsPlugin.create();
       const wavesurfer = WaveSurfer.create({
         container: waveformRef.current,
-        waveColor: "#4CAF50", // Waveform color
-        progressColor: "#2196F3", // Played portion color
-        height: 100, // Height of the waveform
-        responsive: true, // Make the waveform responsive
-        barWidth: 2, // Width of waveform bars
-        cursorColor: "#FF5722", // Cursor color
-        cursorWidth: 2, // Cursor width
-        backend: "WebAudio", // WebAudio for full control
-        normalize: true, // Normalize waveform heights
+        waveColor: "#4CAF50",
+        progressColor: "#2196F3",
+        height: 100,
+        responsive: true,
+        barWidth: 2,
+        cursorColor: "#FF5722",
+        cursorWidth: 2,
+        backend: "WebAudio",
+        normalize: true,
         plugins: [RegionsPlugin.create()],
       });
 
       wavesurferRef.current = wavesurfer;
 
-      // Load the audio file
       const objectURL = URL.createObjectURL(audioFile);
       wavesurfer.load(objectURL);
 
-      // Enable drag selection
+      const regions = wavesurfer.plugins[0];
+
       regions.enableDragSelection({
         color: "rgba(255, 0, 0, 0.1)",
       });
 
-      // Handle region interactions
       regions.on("region-in", (region) => {
         setActiveRegion(region);
       });
 
       regions.on("region-out", (region) => {
-        if (activeRegion === region) {
-          if (loop) {
-            region.play();
-          } else {
-            setActiveRegion(null);
-          }
+        if (activeRegion === region && !loop) {
+          setActiveRegion(null);
         }
       });
 
-      regions.on("region-clicked", (region, e) => {
-        e.stopPropagation(); // prevent triggering a click on the waveform
+      regions.on("region-click", (region, e) => {
+        e.stopPropagation();
         setActiveRegion(region);
         region.play();
         region.setOptions({ color: randomColor() });
       });
 
-      // Reset the active region when the user clicks anywhere in the waveform
       wavesurfer.on("interaction", () => {
         setActiveRegion(null);
       });
 
-      // Cleanup on unmount
       return () => {
         wavesurfer.destroy();
         wavesurferRef.current = null;
       };
     }
-  }, [audioFile, loop, activeRegion]);
+  }, [audioFile, loop]);
 
   const handlePlayPause = () => {
     const wavesurfer = wavesurferRef.current;
@@ -105,44 +97,38 @@ const AudioWaveform = ({ audioFile, onSentenceClick }) => {
   const handleSentenceClick = (start, end) => {
     const wavesurfer = wavesurferRef.current;
     const regionsPlugin = wavesurfer.plugins[0];
-  
-    if (wavesurfer && regionsPlugin) {
-      // Clear existing regions
-      // Object.values(regionsPlugin.regions.list).forEach((region) => region.remove());
-      regionsPlugin.regions.forEach((region) => region.remove()); 
-  
-      // Add the new region for the selected sentence
-      regionsPlugin.addRegion({
-        start: start,
-        end: end,
-        color: "rgba(255, 87, 34, 0.5)", // Highlight color
+
+    if (wavesurfer) {
+      regionsPlugin.regions.forEach((region) => region.remove());
+      const region = regionsPlugin.addRegion({
+        start,
+        end,
+        color: "rgba(255, 87, 34, 0.5)",
         drag: false,
         resize: false,
       });
-  
-      // Stop playback when it reaches the end of the region
-      const stopPlayback = () => {
+
+      const handlePlaybackMonitor = () => {
         const currentTime = wavesurfer.getCurrentTime();
         if (currentTime >= end) {
           wavesurfer.pause();
-          wavesurfer.seekTo(start / wavesurfer.getDuration()); // Reset to start of region
-          wavesurfer.un("audioprocess", stopPlayback); // Remove the listener
+          wavesurfer.seekTo(start / wavesurfer.getDuration());
+          wavesurfer.un("audioprocess", handlePlaybackMonitor); // Clean up listener
+
+          regionsPlugin.regions.forEach((region) => region.remove());
+          setIsPlaying(false);
         }
       };
-  
-      // Remove any existing listener and add a new one
-      wavesurfer.un("audioprocess");
-      wavesurfer.on("audioprocess", stopPlayback);
-  
-      // Play the selected region
-      wavesurfer.play(start, end);
-    } else {
-      console.error("Regions plugin not initialized correctly.");
+      // Attach the playback monitor
+      wavesurfer.on("audioprocess", handlePlaybackMonitor);
+
+      // Seek to the region's start and play
+      wavesurfer.seekTo(start / wavesurfer.getDuration());
+      wavesurfer.play();
+      setIsPlaying(true);
     }
   };
-  
 
-  // Expose handleSentenceClick to parent component (optional)
   useEffect(() => {
     if (onSentenceClick) {
       onSentenceClick(handleSentenceClick);
@@ -150,12 +136,29 @@ const AudioWaveform = ({ audioFile, onSentenceClick }) => {
   }, [onSentenceClick]);
 
   return (
-    <div style={{ margin: "20px 0", textAlign: "center" }}>
+    <div
+      style={{
+        margin: "20px 0",
+        textAlign: "center",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
       {audioFile ? (
         <>
           <div
             ref={waveformRef}
-            style={{ width: "100%", height: "100px", marginBottom: "10px" }}
+            style={{
+              width: "80%",
+              height: "100px",
+              marginBottom: "10px",
+              border: "2px solid #4CAF50",
+              borderRadius: "8px",
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+              padding: "20px",
+              background: "#f9f9f9",
+            }}
           ></div>
           <div
             style={{
@@ -166,7 +169,7 @@ const AudioWaveform = ({ audioFile, onSentenceClick }) => {
             }}
           >
             <button onClick={handlePlayPause} style={{ padding: "10px 20px" }}>
-              Play / Pause
+              {isPlaying ? "Pause" : "Play"}
             </button>
             <div>
               <label htmlFor="playbackRate">Speed: </label>
