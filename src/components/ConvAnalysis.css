@@ -1,0 +1,260 @@
+/* --- ConvAnalysis.css (Alternative Style) --- */
+
+/* General Styles */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  background-color: #f7f8fc; /* Slightly different light background */
+  color: #3d4852; /* Softer default text color */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+p {
+  color: #606f7b; /* Slightly softer paragraph text */
+  font-weight: 400;
+  line-height: 1.65; /* Increased line height */
+}
+
+/* Main Container */
+.conv-container {
+  text-align: center;
+  padding: 35px 45px; /* Generous padding */
+  font-family: inherit;
+  max-width: 680px; /* A bit more constrained width */
+  margin: 4.5rem auto; /* Slightly more top/bottom margin */
+  background: #ffffff;
+  border-radius: 16px; /* More pronounced rounding */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06); /* Soft, diffused shadow */
+  border: 1px solid #eef0f3; /* Very subtle border */
+}
+
+/* Controls Section */
+.conv-controls {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 35px; /* Increased space */
+}
+
+/* Button Styling */
+.conv-button {
+  padding: 14px 28px; /* Slightly larger button */
+  background-color: #4a90e2; /* Pleasant blue */
+  color: #fff;
+  border: none;
+  border-radius: 10px; /* Rounded button corners */
+  cursor: pointer;
+  font-size: 1.05rem; /* Slightly larger font */
+  font-weight: 500; /* Medium weight */
+  transition: all 0.25s ease-out;
+  box-shadow: 0 3px 6px rgba(74, 144, 226, 0.2); /* Subtle shadow matching button */
+}
+
+.conv-button:hover:not(.disabled) {
+  background-color: #3a7bc8; /* Darker blue on hover */
+  box-shadow: 0 5px 10px rgba(74, 144, 226, 0.3);
+  transform: translateY(-1px);
+}
+
+.conv-button:active:not(.disabled) {
+  background-color: #306eb5;
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(74, 144, 226, 0.2);
+}
+
+.conv-button.disabled {
+  background-color: #d8dde4; /* Neutral disabled color */
+  color: #a0aec0; /* Muted text */
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Output Section */
+.conv-output {
+  margin-top: 25px;
+  text-align: center; /* Center align content within output */
+  padding: 25px 20px;
+  background-color: #f8faff; /* Very light blue tint */
+  border-radius: 12px; /* Match container style */
+  border: 1px solid #e6eaf3;
+}
+
+/* Quality Label */
+.conv-label {
+  font-size: 1.4rem; /* Larger, clearer heading */
+  font-weight: 600;
+  margin-bottom: 25px;
+  color: #2c3e50; /* Darker, sophisticated blue/grey */
+}
+
+/* Score Display Area */
+.score-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px; /* Consistent spacing */
+}
+
+/* Quality Badge (Good/Moderate/Bad Text) */
+.quality-badge {
+  padding: 8px 18px; /* Comfortable padding */
+  border-radius: 20px; /* Fully rounded pill shape */
+  font-weight: 600;
+  color: #fff;
+  font-size: 0.9rem; /* Slightly smaller badge text */
+  text-transform: uppercase;
+  letter-spacing: 0.8px; /* More spacing */
+  min-width: 100px; /* Ensure minimum width */
+  text-align: center;
+}
+
+/* Score Bar */
+.score-bar-container {
+  width: 90%; /* Relative width */
+  max-width: 350px;
+  height: 12px; /* Slimmer bar */
+  background-color: #e1e8f0; /* Neutral background */
+  border-radius: 6px; /* Rounded ends */
+  margin: 5px auto; /* Add vertical margin */
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 6px; /* Match container rounding */
+  transition: width 0.7s cubic-bezier(0.23, 1, 0.32, 1); /* Smooth, decelerating transition */
+  box-shadow: none; /* Remove inner highlight for cleaner look */
+}
+
+/* Score Value Text (X/10) */
+.score-value {
+  margin-top: 0; /* Align closely with the bar */
+  font-size: 1rem;
+  font-weight: 500; /* Medium weight */
+  color: #555; /* Default color, overridden by class */
+}
+
+/* --- Quality Color Classes --- */
+
+/* Define base colors */
+:root {
+  --color-bad: #e57373; /* Softer red */
+  --color-moderate: #ffb74d; /* Softer orange */
+  --color-good: #81c784; /* Softer green */
+  --color-bad-text: #c62828; /* Darker red for text */
+  --color-moderate-text: #ef6c00; /* Darker orange for text */
+  --color-good-text: #2e7d32; /* Darker green for text */
+}
+
+/* Apply colors */
+.score-bar-fill.score-bad,
+.quality-badge.score-bad {
+  background-color: var(--color-bad);
+}
+.score-value.score-bad {
+  color: var(--color-bad-text);
+}
+
+.score-bar-fill.score-moderate,
+.quality-badge.score-moderate {
+  background-color: var(--color-moderate);
+}
+.score-value.score-moderate {
+  color: var(--color-moderate-text);
+}
+
+.score-bar-fill.score-good,
+.quality-badge.score-good {
+  background-color: var(--color-good);
+}
+.score-value.score-good {
+  color: var(--color-good-text);
+}
+
+.quality-badge {
+  color: #fff; /* Keep badge text white for contrast */
+  /* Add subtle shadow to badge for depth */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Placeholder Text */
+.conv-placeholder {
+  color: #8795a1; /* Muted placeholder color */
+  margin: 25px 0 10px 0; /* Adjust margin */
+  font-style: normal;
+  font-size: 0.95rem;
+}
+
+
+/* --- Styles for Transcript Display (Optional - Keep if needed) --- */
+.transcript-display {
+  margin-top: 35px;
+  border-top: 1px solid #eef0f3;
+  padding-top: 25px;
+  text-align: left; /* Align transcript text left */
+}
+
+.conv-segment {
+  margin-bottom: 12px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: 1px solid #eef0f3;
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.conv-segment:hover {
+  background-color: #f8faff;
+  border-color: #dce3f0;
+}
+
+.segment-summary {
+  color: #4a90e2; /* Match button color */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.dropdown-icon {
+  font-size: 1em;
+  color: #a0aec0;
+  transition: transform 0.3s ease;
+}
+
+.sentence-list {
+  margin-top: 12px;
+  padding-left: 20px;
+  border-left: 2px solid #e1e8f0;
+}
+
+.sentence {
+  margin-bottom: 10px;
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  color: #4a5568; /* Slightly darker sentence text */
+  line-height: 1.5;
+}
+
+.sentence:hover {
+  background-color: #edf2f7;
+}
+
+.speaker {
+  font-weight: 600;
+  color: #3a7bc8; /* Darker shade of blue */
+  margin-right: 8px;
+}
+
+.time-range {
+  color: #8795a1;
+  font-size: 0.85em;
+}

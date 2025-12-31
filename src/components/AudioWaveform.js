@@ -1,217 +1,302 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
+import "./AudioWaveform.css";
 
-const random = (min, max) => Math.random() * (max - min) + min;
-const randomColor = () =>
-  `rgba(${random(0, 255)}, ${random(0, 255)}, ${random(0, 255)}, 0.5)`;
+// SVG Icons
+const PlayIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M8 5v14l11-7z"/>
+  </svg>
+);
+
+const PauseIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+  </svg>
+);
+
+const SkipBackIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+  </svg>
+);
+
+const SkipForwardIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+  </svg>
+);
+
+const VolumeIcon = ({ muted, level }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    {muted || level === 0 ? (
+      <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+    ) : level < 0.5 ? (
+      <path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/>
+    ) : (
+      <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+    )}
+  </svg>
+);
 
 const AudioWaveform = ({ audioFile, onSentenceClick }) => {
   const waveformRef = useRef(null);
   const wavesurferRef = useRef(null);
+  const objectURLRef = useRef(null);
+  const timeCheckRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackRate, setPlaybackRate] = useState(1);
-  const [volume, setVolume] = useState(1);
-  const [loop, setLoop] = useState(false); // Default loop state should be off
-  const [activeRegion, setActiveRegion] = useState(null);
+  const [volume, setVolume] = useState(0.8);
+  const [isReady, setIsReady] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+
+  const clearActiveRegion = useCallback(() => {
+    const wavesurfer = wavesurferRef.current;
+    if (!wavesurfer) return;
+
+    if (timeCheckRef.current) {
+      wavesurfer.un("timeupdate", timeCheckRef.current);
+      timeCheckRef.current = null;
+    }
+
+    const regionsPlugin = wavesurfer.plugins[0];
+    if (regionsPlugin) {
+      regionsPlugin.clearRegions();
+    }
+  }, []);
 
   useEffect(() => {
-    if (audioFile) {
-      const wavesurfer = WaveSurfer.create({
-        container: waveformRef.current,
-        waveColor: "#4CAF50",
-        progressColor: "#2196F3",
-        height: 100,
-        responsive: true,
-        barWidth: 2,
-        cursorColor: "#FF5722",
-        cursorWidth: 2,
-        backend: "WebAudio",
-        normalize: true,
-        plugins: [RegionsPlugin.create()],
-      });
-
-      wavesurferRef.current = wavesurfer;
-
-      const objectURL = URL.createObjectURL(audioFile);
-      wavesurfer.load(objectURL);
-
-      const regions = wavesurfer.plugins[0];
-
-      regions.enableDragSelection({
-        color: "rgba(255, 0, 0, 0.1)",
-      });
-
-      regions.on("region-in", (region) => {
-        setActiveRegion(region);
-      });
-
-      regions.on("region-out", (region) => {
-        if (activeRegion === region && !loop) {
-          setActiveRegion(null);
-        }
-      });
-
-      regions.on("region-click", (region, e) => {
-        e.stopPropagation();
-        setActiveRegion(region);
-        region.play();
-        region.setOptions({ color: randomColor() });
-      });
-
-      wavesurfer.on("interaction", () => {
-        setActiveRegion(null);
-      });
-
-      return () => {
-        wavesurfer.destroy();
-        wavesurferRef.current = null;
-      };
-    }
-  }, [audioFile, loop]);
-
-  const handlePlayPause = () => {
-    const wavesurfer = wavesurferRef.current;
-    if (wavesurfer) {
-      wavesurfer.playPause();
-      setIsPlaying(wavesurfer.isPlaying());
-    }
-  };
-
-  const handlePlaybackRateChange = (e) => {
-    const rate = parseFloat(e.target.value);
-    setPlaybackRate(rate);
+    clearActiveRegion();
+    
     if (wavesurferRef.current) {
-      wavesurferRef.current.setPlaybackRate(rate);
+      wavesurferRef.current.destroy();
+      wavesurferRef.current = null;
     }
-  };
+    if (objectURLRef.current) {
+      URL.revokeObjectURL(objectURLRef.current);
+      objectURLRef.current = null;
+    }
 
-  const handleVolumeChange = (e) => {
+    setIsPlaying(false);
+    setIsReady(false);
+    setCurrentTime(0);
+    setDuration(0);
+
+    if (!audioFile || !waveformRef.current) return;
+
+    const wavesurfer = WaveSurfer.create({
+      container: waveformRef.current,
+      waveColor: "#adb5bd",
+      progressColor: "#0d6efd",
+      height: 64,
+      barWidth: 2,
+      barGap: 1,
+      barRadius: 1,
+      cursorColor: "#495057",
+      cursorWidth: 1,
+      backend: "WebAudio",
+      normalize: true,
+      plugins: [RegionsPlugin.create()],
+    });
+
+    wavesurferRef.current = wavesurfer;
+
+    objectURLRef.current = URL.createObjectURL(audioFile);
+    wavesurfer.load(objectURLRef.current);
+
+    wavesurfer.on("ready", () => {
+      setIsReady(true);
+      setDuration(wavesurfer.getDuration());
+      wavesurfer.setVolume(volume);
+    });
+
+    wavesurfer.on("play", () => setIsPlaying(true));
+    wavesurfer.on("pause", () => setIsPlaying(false));
+    wavesurfer.on("finish", () => {
+      setIsPlaying(false);
+      clearActiveRegion();
+    });
+    wavesurfer.on("timeupdate", (time) => setCurrentTime(time));
+    wavesurfer.on("interaction", () => clearActiveRegion());
+    wavesurfer.on("error", (err) => {
+      console.error("WaveSurfer error:", err);
+      setIsReady(false);
+    });
+
+    return () => {
+      clearActiveRegion();
+      if (wavesurferRef.current) {
+        wavesurferRef.current.destroy();
+        wavesurferRef.current = null;
+      }
+      if (objectURLRef.current) {
+        URL.revokeObjectURL(objectURLRef.current);
+        objectURLRef.current = null;
+      }
+    };
+  }, [audioFile, clearActiveRegion]);
+
+  useEffect(() => {
+    if (wavesurferRef.current && isReady) {
+      wavesurferRef.current.setVolume(isMuted ? 0 : volume);
+    }
+  }, [volume, isReady, isMuted]);
+
+  const handlePlayPause = useCallback(() => {
+    if (wavesurferRef.current && isReady) {
+      wavesurferRef.current.playPause();
+    }
+  }, [isReady]);
+
+  const handleVolumeChange = useCallback((e) => {
     const vol = parseFloat(e.target.value);
     setVolume(vol);
-    if (wavesurferRef.current) {
-      wavesurferRef.current.setVolume(vol);
-    }
-  };
+    if (vol > 0) setIsMuted(false);
+  }, []);
 
-  const handleSentenceClick = (start, end) => {
+  const toggleMute = useCallback(() => {
+    setIsMuted(prev => !prev);
+  }, []);
+
+  const handleSkip = useCallback((seconds) => {
     const wavesurfer = wavesurferRef.current;
+    if (wavesurfer && isReady) {
+      const newTime = Math.max(0, Math.min(wavesurfer.getCurrentTime() + seconds, duration));
+      wavesurfer.seekTo(newTime / duration);
+    }
+  }, [isReady, duration]);
+
+  const handleSentenceClick = useCallback((start, end) => {
+    const wavesurfer = wavesurferRef.current;
+    if (!wavesurfer || !isReady) return;
+
+    clearActiveRegion();
+
     const regionsPlugin = wavesurfer.plugins[0];
+    if (!regionsPlugin) return;
 
-    if (wavesurfer) {
-      regionsPlugin.regions.forEach((region) => region.remove());
-      const region = regionsPlugin.addRegion({
-        start,
-        end,
-        color: "rgba(255, 87, 34, 0.5)",
-        drag: false,
-        resize: false,
-      });
+    const audioDuration = wavesurfer.getDuration();
+    const safeStart = Math.max(0, start);
+    const safeEnd = Math.min(end, audioDuration);
 
-      const handlePlaybackMonitor = () => {
-        const currentTime = wavesurfer.getCurrentTime();
-        if (currentTime >= end) {
+    regionsPlugin.addRegion({
+      start: safeStart,
+      end: safeEnd,
+      color: "rgba(13, 110, 253, 0.15)",
+      drag: false,
+      resize: false,
+    });
+
+    if (audioDuration > 0) {
+      wavesurfer.seekTo(safeStart / audioDuration);
+      wavesurfer.play();
+
+      const checkTime = (currentTime) => {
+        if (currentTime >= safeEnd) {
           wavesurfer.pause();
-          wavesurfer.seekTo(start / wavesurfer.getDuration());
-          wavesurfer.un("audioprocess", handlePlaybackMonitor); // Clean up listener
-
-          regionsPlugin.regions.forEach((region) => region.remove());
-          setIsPlaying(false);
+          clearActiveRegion();
         }
       };
-      // Attach the playback monitor
-      wavesurfer.on("audioprocess", handlePlaybackMonitor);
 
-      // Seek to the region's start and play
-      wavesurfer.seekTo(start / wavesurfer.getDuration());
-      wavesurfer.play();
-      setIsPlaying(true);
+      timeCheckRef.current = checkTime;
+      wavesurfer.on("timeupdate", checkTime);
     }
-  };
+  }, [isReady, clearActiveRegion]);
 
   useEffect(() => {
     if (onSentenceClick) {
       onSentenceClick(handleSentenceClick);
     }
-  }, [onSentenceClick]);
+  }, [onSentenceClick, handleSentenceClick]);
+
+  const formatTime = (time) => {
+    if (!time || isNaN(time)) return "0:00";
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div
-      style={{
-        margin: "20px 0",
-        textAlign: "center",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-      }}
-    >
+    <div className="waveform-container">
+      <div className="waveform-header">
+        <h3 className="waveform-title">Audio Waveform</h3>
+        {audioFile && (
+          <span className={`waveform-status ${isReady ? "ready" : ""}`}>
+            {isReady ? "Ready" : "Loading..."}
+          </span>
+        )}
+      </div>
+
       {audioFile ? (
-        <>
-          <div
-            ref={waveformRef}
-            style={{
-              width: "80%",
-              height: "100px",
-              marginBottom: "10px",
-              border: "2px solid #4CAF50",
-              borderRadius: "8px",
-              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-              padding: "20px",
-              background: "#f9f9f9",
-            }}
-          ></div>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: "20px",
-              margin: "10px 0",
-            }}
-          >
-            <button onClick={handlePlayPause} style={{ padding: "10px 20px" }}>
-              {isPlaying ? "Pause" : "Play"}
-            </button>
-            <div>
-              <label htmlFor="playbackRate">Speed: </label>
-              <select
-                id="playbackRate"
-                value={playbackRate}
-                onChange={handlePlaybackRateChange}
-                style={{ padding: "5px" }}
+        <div className="waveform-content">
+          <div className="waveform-info">
+            <span className="file-name">{audioFile.name}</span>
+          </div>
+
+          <div ref={waveformRef} className="waveform-display"></div>
+          
+          <div className="progress-track">
+            <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
+          </div>
+
+          <div className="waveform-controls">
+            <div className="controls-group">
+              <button
+                onClick={() => handleSkip(-10)}
+                disabled={!isReady}
+                className="control-btn"
+                title="Rewind 10s"
               >
-                <option value="0.5">0.5x</option>
-                <option value="1">1x</option>
-                <option value="1.5">1.5x</option>
-                <option value="2">2x</option>
-              </select>
+                <SkipBackIcon />
+              </button>
+              
+              <button
+                onClick={handlePlayPause}
+                disabled={!isReady}
+                className="control-btn play-btn"
+              >
+                {isPlaying ? <PauseIcon /> : <PlayIcon />}
+              </button>
+
+              <button
+                onClick={() => handleSkip(10)}
+                disabled={!isReady}
+                className="control-btn"
+                title="Forward 10s"
+              >
+                <SkipForwardIcon />
+              </button>
             </div>
-            <div>
-              <label htmlFor="volume">Volume: </label>
+
+            <div className="time-display">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </div>
+
+            <div className="volume-group">
+              <button onClick={toggleMute} className="control-btn volume-btn">
+                <VolumeIcon muted={isMuted} level={volume} />
+              </button>
               <input
-                id="volume"
                 type="range"
                 min="0"
                 max="1"
-                step="0.1"
-                value={volume}
+                step="0.05"
+                value={isMuted ? 0 : volume}
                 onChange={handleVolumeChange}
-                style={{ verticalAlign: "middle" }}
+                className="volume-slider"
               />
             </div>
-            <div>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={loop}
-                  onChange={(e) => setLoop(e.target.checked)}
-                />
-                Loop regions
-              </label>
-            </div>
           </div>
-        </>
+        </div>
       ) : (
-        <p>Upload an audio file to view its waveform.</p>
+        <div className="waveform-empty">
+          <p>No audio file selected</p>
+          <span>Upload a file to view waveform</span>
+        </div>
       )}
     </div>
   );

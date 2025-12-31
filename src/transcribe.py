@@ -2,21 +2,34 @@ import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import torch
-from transformers import pipeline
-import whisper_timestamped as whisper
-from pyannote.audio import Pipeline
-from pyannote.audio.pipelines.utils.hook import ProgressHook
+# from transformers import pipeline
+# import whisper
+# from pyannote.audio import Pipeline
+# from pyannote.audio.pipelines.utils.hook import ProgressHook
 from sentence_transformers import SentenceTransformer, util
 from tqdm import tqdm
+
+# from sklearn.linear_model import LogisticRegression
+# from sklearn.svm import SVC
+# from sklearn.neighbors import KNeighborsClassifier
+# from sklearn.tree import DecisionTreeClassifier
+# from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+# from sklearn.model_selection import train_test_split, cross_val_score, KFold, StratifiedKFold
+# from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+# import matplotlib.pyplot as plt
+# import seaborn as sns
+# import numpy as np
+# import pandas as pd
+
 
 app = Flask(__name__)
 CORS(app)  
 
 device = "mps" if torch.backends.mps.is_available() else "cpu"
 
-pyannote_pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token="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")
-pyannote_pipeline.to(torch.device(device))
-whisper_model = whisper.load_model("base")
+# pyannote_pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", use_auth_token="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")
+# pyannote_pipeline.to(torch.device(device))
+# whisper_model = whisper.load_model("base")
 
 # model_id = "meta-llama/Llama-3.2-1B-Instruct"
 # pipe = pipeline(
@@ -30,70 +43,71 @@ model_name = "all-MiniLM-L6-v2"
 sentence_model = SentenceTransformer(model_name)
 
 
-def find_closest_speaker(whisper_start, whisper_end, diarization, tolerance):
-    for segment in diarization:
-        if (segment['start'] - tolerance <= whisper_start <= segment['end'] + tolerance or
-            segment['start'] - tolerance <= whisper_end <= segment['end'] + tolerance):
-            return segment['speaker']
-    return "Unknown Speaker"
+# def find_closest_speaker(whisper_start, whisper_end, diarization, tolerance):
+#     for segment in diarization:
+#         if (segment['start'] - tolerance <= whisper_start <= segment['end'] + tolerance or
+#             segment['start'] - tolerance <= whisper_end <= segment['end'] + tolerance):
+#             return segment['speaker']
+#     return "Unknown Speaker"
 
-def transcribe(request):
-    if 'file' not in request.files:
-        return jsonify({"error": "No file provided"}), 400
+# def transcribe(request):
+#     if 'file' not in request.files:
+#         return jsonify({"error": "No file provided"}), 400
     
-    audio_file = request.files['file']
-    file_path = os.path.join("uploads", audio_file.filename)
-    audio_file.save(file_path)
+#     audio_file = request.files['file']
+#     file_path = os.path.join("uploads", audio_file.filename)
+#     audio_file.save(file_path)
 
-    with ProgressHook() as hook:
-        diarization = pyannote_pipeline(file_path, num_speakers=2, hook=hook)
+#     with ProgressHook() as hook:
+#         diarization = pyannote_pipeline(file_path, num_speakers=2, hook=hook)
 
-    diarization_output = [
-        {"start": turn.start, "end": turn.end, "speaker": speaker}
-        for turn, _, speaker in diarization.itertracks(yield_label=True)
-    ]
+#     diarization_output = [
+#         {"start": turn.start, "end": turn.end, "speaker": speaker}
+#         for turn, _, speaker in diarization.itertracks(yield_label=True)
+#     ]
 
-    result = whisper.transcribe(whisper_model, file_path, language="en")
-    whisper_transcript = [
-        {"start": segment["start"], "end": segment["end"], "text": segment["text"]}
-        for segment in result["segments"]
-    ]
+#     # result = whisper.transcribe(whisper_model, file_path, language="en")
+#     result = whisper_model.transcribe(file_path, word_timestamps=True, language="en")
+#     whisper_transcript = [
+#         {"start": segment["start"], "end": segment["end"], "text": segment["text"]}
+#         for segment in result["segments"]
+#     ]
 
-    tolerance = 0.2
-    formatted_output = []
+#     tolerance = 0.2
+#     formatted_output = []
 
-    for segment in whisper_transcript:
-        speaker = find_closest_speaker(segment['start'], segment['end'], diarization_output, tolerance)
-        formatted_output.append({"speaker": speaker, "text": segment['text'], "start": segment["start"], "end": segment["end"]})
+#     for segment in whisper_transcript:
+#         speaker = find_closest_speaker(segment['start'], segment['end'], diarization_output, tolerance)
+#         formatted_output.append({"speaker": speaker, "text": segment['text'], "start": segment["start"], "end": segment["end"]})
 
-    os.remove(file_path)
+#     os.remove(file_path)
 
-    return formatted_output
+#     return formatted_output
 
-def generate_merged_transcript(transcript):
-    merged_transcript = []
+# def generate_merged_transcript(transcript):
+#     merged_transcript = []
   
-    for item in transcript:
-        if merged_transcript and merged_transcript[-1]['speaker'] == item['speaker']:
-            merged_transcript[-1]['text'] += " " + item['text']
-            merged_transcript[-1]['end'] = item['end']
-        else:
-            merged_transcript.append(item.copy())
-            merged_transcript[-1]['id'] = len(merged_transcript)
-            merged_transcript[-1]['start'] = item['start']
+#     for item in transcript:
+#         if merged_transcript and merged_transcript[-1]['speaker'] == item['speaker']:
+#             merged_transcript[-1]['text'] += " " + item['text']
+#             merged_transcript[-1]['end'] = item['end']
+#         else:
+#             merged_transcript.append(item.copy())
+#             merged_transcript[-1]['id'] = len(merged_transcript)
+#             merged_transcript[-1]['start'] = item['start']
   
-    full_text = " ".join([f"{entry['id']} ) {entry['text']} #\n" for entry in merged_transcript])
+#     full_text = " ".join([f"{entry['id']} ) {entry['text']} #\n" for entry in merged_transcript])
   
-    prompt = f"Consider a conversation between two people and give single paragraph summary. \n{full_text}"
+#     prompt = f"Consider a conversation between two people and give single paragraph summary. \n{full_text}"
   
-    return {"merged_transcript": merged_transcript, "full_text": full_text, "prompt": prompt}
+#     return {"merged_transcript": merged_transcript, "full_text": full_text, "prompt": prompt}
 
-def summarize(prompt):
-    outputs = pipe(
-        [{"role": "user", "content": prompt}],
-        max_new_tokens=256,
-    )
-    return {"summary": outputs[0]["generated_text"][-1]['content']}
+# def summarize(prompt):
+#     outputs = pipe(
+#         [{"role": "user", "content": prompt}],
+#         max_new_tokens=256,
+#     )
+#     return {"summary": outputs[0]["generated_text"][-1]['content']}
 
 def get_item_by_id(merged_transcript, idx):
     for item in merged_transcript:
@@ -111,7 +125,11 @@ def find_contributing_segments(merged_output, summary, top_n=3, threshold=0.5):
     print("segments",segments)
     segment_embeddings = sentence_model.encode(segments, convert_to_tensor=True)
     
-    summary_split = summary.split('\n\n')[1].split('. ')
+    try:
+        summary_split = summary.split('\n\n')[1].split('. ')
+    except:
+        summary_split = summary.split('. ')
+        
     for sentence in tqdm(summary_split):
         
         sentence_embedding = sentence_model.encode(sentence, convert_to_tensor=True)
@@ -126,7 +144,100 @@ def find_contributing_segments(merged_output, summary, top_n=3, threshold=0.5):
         contributing_segments.append(sentence_contributing_segments)
 
     return contributing_segments
+
+
+# def load_model_and_predict(model_path, X_new, input_dim=8, class_names=None):
+#     model_path = "MLP.pt"
+#     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+#     model = MLPClassifier(input_dim=input_dim).to(device)
+#     model.load_state_dict(torch.load(model_path, map_location=device))
+#     model.eval()
+
+#     X_tensor = torch.tensor(X_new, dtype=torch.float32).to(device)
+
+#     # Inference
+#     with torch.no_grad():
+#         logits = model(X_tensor)
+#         preds = logits.argmax(dim=1).cpu().numpy()
+
+#     if class_names:
+#         preds = [class_names[p] for p in preds]
+
+#     return preds
     
+    
+# def ml_model_score_pred():
+
+#     # Assuming X and Y are already defined and transform_y function exists
+#     # Transform target if needed
+#     Y_cls = transform_y(Y)
+
+#     X_cent = (X - X.mean(axis=0)) / X.std(axis=0)
+
+#     # Train-test split for final evaluation
+#     X_train, X_test, Y_train, Y_test = train_test_split(X_cent, Y_cls, test_size=0.2, random_state=42, stratify=Y_cls)
+
+#     # Initialize models
+#     models = {
+#         'Logistic Regression': LogisticRegression(class_weight='balanced', random_state=42, max_iter=1000),
+#         'Support Vector Machine': SVC(class_weight='balanced', random_state=42, probability=True),
+#         'K-Nearest Neighbors': KNeighborsClassifier(),
+#         'Decision Tree': DecisionTreeClassifier(class_weight='balanced', random_state=42),
+#         'Gradient Boosting': GradientBoostingClassifier(random_state=42),
+#         'Random Forest': RandomForestClassifier(n_estimators=100, class_weight='balanced', random_state=42)
+#     }
+
+#     # Dictionary to store results
+#     cv_results = {}
+#     test_results = {}
+#     conf_matrices = {}
+
+#     # Define 5-fold cross-validation
+#     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+#     # Perform cross-validation and final evaluation for each model
+#     for model_name, model in models.items():
+#         print(f"\nEvaluating {model_name}...")
+        
+#         # 5-fold cross-validation
+#         cv_scores = cross_val_score(model, X_cent, Y_cls, cv=cv, scoring='accuracy')
+#         cv_results[model_name] = {
+#             'mean_accuracy': cv_scores.mean(),
+#             'std_accuracy': cv_scores.std(),
+#             'cv_scores': cv_scores
+#         }
+        
+#         print(f"Cross-validation accuracy: {cv_scores.mean():.4f} ± {cv_scores.std():.4f}")
+        
+#         # Train on full training set and evaluate on test set
+#         model.fit(X_train, Y_train)
+#         preds = model.predict(X_test)
+        
+#         # Calculate metrics
+#         test_acc = accuracy_score(Y_test, preds)
+#         report = classification_report(Y_test, preds, digits=4, output_dict=True)
+#         cm = confusion_matrix(Y_test, preds)
+        
+#         # Store results
+#         test_results[model_name] = {
+#             'accuracy': test_acc,
+#             'report': report
+#         }
+#         conf_matrices[model_name] = cm
+        
+#         print(f"Test set accuracy: {test_acc:.4f}")
+
+#     # Create DataFrame for CV results
+#     cv_df = pd.DataFrame({
+#         'Model': list(cv_results.keys()),
+#         'CV Mean Accuracy': [cv_results[model]['mean_accuracy'] for model in cv_results],
+#         'CV Std Accuracy': [cv_results[model]['std_accuracy'] for model in cv_results],
+#         'Test Accuracy': [test_results[model]['accuracy'] for model in cv_results]
+#     }).sort_values('CV Mean Accuracy', ascending=False)
+
+#     return np.mean(cv_df["mean_sccuracy"])
+
 
 @app.route('/process', methods=['POST'])
 def process():

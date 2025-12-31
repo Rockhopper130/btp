@@ -1,119 +1,408 @@
-p {
-    color: #1e1e1e;
-    font-weight: 500;
-    font-family: Arial, Helvetica, sans-serif;
-}
+/* --- AudioTranscriber.css - Clean Academic Theme --- */
 
-.transcriber-container {
-  text-align: center;
-  padding: 20px;
-  font-family: "Arial", sans-serif;
-  max-width: 800px;
-  margin: 0 auto;
-  background: #f8f9fa;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.transcriber-header {
-  color: #4caf50;
-  margin-bottom: 20px;
-}
-
-.transcriber-controls {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  gap: 32px;
-  margin-bottom: 20px;
-}
-
-.file-input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  margin-right: 10px;
-}
-
-.transcribe-button {
-  padding: 10px 20px;
-  background-color: #4caf50;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.transcribe-button.disabled {
-  background-color: #d3d3d3;
-  cursor: not-allowed;
-}
-
-.transcribe-button:not(.disabled):hover {
-  background-color: #388e3c;
-}
-
-.transcription-output {
-  margin-top: 20px;
-  text-align: left;
-}
-
-.transcription-header {
-  color: #333;
-  margin-bottom: 15px;
-}
-
-.transcription-segment {
-  margin-bottom: 20px;
-  padding: 5px 15px;
+/* Shared Panel Styles */
+.upload-panel,
+.results-panel {
+  background: #ffffff;
+  border: 1px solid #dee2e6;
   border-radius: 8px;
-  border: 1px solid #ddd;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
+  overflow: hidden;
 }
 
-.segment-summary {
-  color: #4caf50;
-  /* margin-bottom: 10px; */
+.panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e9ecef;
+  background: #f8f9fa;
 }
 
-.dropdown-icon {
-  font-size: 1.2em;
-  color: #888;
+.panel-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #212529;
+  margin: 0;
 }
 
-.sentence-list {
-  margin-top: 10px;
-  padding-left: 15px;
+.panel-content {
+  padding: 16px;
 }
 
-.sentence {
-  margin-bottom: 10px;
+/* Upload Panel */
+.upload-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.upload-panel .panel-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+.file-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  border: 2px dashed #dee2e6;
+  border-radius: 6px;
   cursor: pointer;
-  padding: 10px;
-  border-radius: 5px;
-  transition: background-color 0.2s;
+  transition: all 0.15s ease;
+  background: #f8f9fa;
 }
 
-.sentence:hover {
-  background-color: #f1f1f1;
+.file-upload-area:hover {
+  border-color: #0d6efd;
+  background: #f0f7ff;
 }
 
-.speaker {
-  color: #4caf50;
+.upload-icon {
+  width: 32px;
+  height: 32px;
+  color: #6c757d;
+  margin-bottom: 8px;
 }
 
-.time-range {
-  color: #555;
+.upload-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
-.transcription-placeholder {
-  color: #555;
+.file-upload-area:hover .upload-icon {
+  color: #0d6efd;
+}
+
+.upload-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #495057;
+  margin-bottom: 4px;
+}
+
+.upload-hint {
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+.selected-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #e7f1ff;
+  border: 1px solid #b6d4fe;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.selected-label {
+  color: #0d6efd;
+  font-weight: 500;
+}
+
+.selected-name {
+  color: #495057;
+  font-family: 'Source Code Pro', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.analyze-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  background: #0d6efd;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-top: auto;
+}
+
+.analyze-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.analyze-btn:hover:not(.disabled) {
+  background: #0b5ed7;
+}
+
+.analyze-btn.disabled {
+  background: #dee2e6;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Results Panel */
+.results-badge {
+  font-size: 0.75rem;
+  color: #495057;
+  padding: 2px 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+}
+
+.segments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.segment-item {
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.segment-item:hover {
+  border-color: #adb5bd;
+}
+
+.segment-item.expanded {
+  border-color: #0d6efd;
+}
+
+.segment-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  background: #f8f9fa;
+  transition: background 0.15s ease;
+}
+
+.segment-header:hover {
+  background: #e9ecef;
+}
+
+.segment-number {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d6efd;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.segment-text {
+  flex: 1;
+  margin: 0;
+  font-size: 0.875rem;
+  color: #212529;
+  line-height: 1.5;
+}
+
+.expand-btn {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: #6c757d;
+}
+
+.expand-btn svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Sources Section */
+.sources-section {
+  border-top: 1px solid #e9ecef;
+  padding: 12px 16px;
+  background: white;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sources-header {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 10px;
+  padding-left: 36px;
+}
+
+.sources-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 36px;
+}
+
+.source-item {
+  padding: 10px 12px;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.source-item:hover {
+  border-color: #0d6efd;
+  background: #f8f9fa;
+}
+
+.source-item.active {
+  border-color: #0d6efd;
+  background: #e7f1ff;
+}
+
+.source-item:focus {
+  outline: 2px solid #0d6efd;
+  outline-offset: 1px;
+}
+
+.source-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.speaker-tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.speaker-tag.speaker-1 {
+  background: #cfe2ff;
+  color: #084298;
+}
+
+.speaker-tag.speaker-2 {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.time-tag {
+  font-size: 0.7rem;
+  font-family: 'Source Code Pro', monospace;
+  color: #6c757d;
+  background: #e9ecef;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.play-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #0d6efd;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.play-tag svg {
+  width: 10px;
+  height: 10px;
+}
+
+.source-item:hover .play-tag {
+  opacity: 1;
+}
+
+.source-text {
+  margin: 0;
+  font-size: 0.825rem;
+  color: #495057;
+  line-height: 1.5;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.empty-title {
+  margin: 0 0 8px 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #495057;
+}
+
+.empty-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sources-list {
+    padding-left: 0;
+  }
+
+  .sources-header {
+    padding-left: 0;
+  }
+
+  .source-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .play-tag {
+    opacity: 1;
+    margin-left: 0;
+  }
 }
